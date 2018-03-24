@@ -4,8 +4,9 @@ local puni = {}
 -- Consts
 --
 
-puni.SPEED_NORMAL = 0
-puni.SPEED_HIGH   = 1
+puni.SPEED_SLOW   = -1
+puni.SPEED_NORMAL =  0
+puni.SPEED_HIGH   =  1
 
 puni.SPMOVE_MODE_ANYTIME       = 0
 puni.SPMOVE_MODE_ONLY_IN_FEVER = 1
@@ -40,7 +41,10 @@ end
 --
 
 function puni.setSpeed(speed)
-  if speed == puni.SPEED_NORMAL then
+  if speed == puni.SPEED_SLOW then
+    puni.setIntervalMillis(5000.00)
+    puni.setActionIntervalMillis(5000.00)
+  elseif speed == puni.SPEED_NORMAL then
     puni.setIntervalMillis(5000.00)
     puni.setActionIntervalMillis(2500.00)
   elseif speed == puni.SPEED_HIGH then
@@ -81,6 +85,39 @@ function puni.findTap(colors, count, region)
   end
 end
 
+function puni.colorIs(x, y, colors)
+  local color = getColor(x, y)
+  for i, v in pairs(colors) do
+    if v == color then
+      return true
+    end
+  end
+  return false
+end
+
+function puni.colorIn(x, y, colorMin, colorMax)
+  local color = getColor(x, y)
+  if colorMin <= color and color <= colorMax then
+    return true
+  end
+  return false
+end
+
+function puni.tapIfColor(x, y, colors)
+  if puni.colorIs(x, y, colors) then
+    tap(x, y)
+    puni.usleep()
+  end
+end
+
+function puni.doContinue(continue)
+  if continue then
+    puni.tapIfColor(906, 1314, {16699966})
+  else
+    puni.tapIfColor(298, 1314, {11902202})
+  end
+end
+
 function puni.randomTap(rangeX, rangeY)
   math.randomseed(os.time())
 
@@ -102,7 +139,8 @@ function puni.find(colors, count, region)
 end
 
 function puni.canPlay()
-  return puni.find({{16774609,0,0}, {2302755,89,44}, {16701266,20,89}, {16700487,120,85}, {13355194,143,49}, {2302755,223,57}, {2960428,268,53}}, 1, nil)
+  -- return puni.find({{16774609,0,0}, {2302755,89,44}, {16701266,20,89}, {16700487,120,85}, {13355194,143,49}, {2302755,223,57}, {2960428,268,53}}, 1, nil)
+  return puni.colorIs(992, 1615, {16704114})
 end
 
 function puni.startPlay()
@@ -110,10 +148,12 @@ function puni.startPlay()
 end
 
 function puni.endPlay()
-  puni.findTap({{16771224,0,0}, {2302755,7,8}, {16703072,18,18}, {2302755,36,15}, {16769133,47,7}, {2302755,59,10}, {16772518,98,-12}}, 1, nil)
+  -- puni.findTap({{16771224,0,0}, {2302755,7,8}, {16703072,18,18}, {2302755,36,15}, {16769133,47,7}, {2302755,59,10}, {16772518,98,-12}}, 1, nil)
+  puni.tapIfColor(618, 1495, {16773824})
 
   -- Fallback
-  puni.findTap({{16700238,0,0}, {2302755,30,-3}, {2302755,54,-3}, {16699188,71,1}, {16774872,63,1}, {16771217,42,-20}, {2302755,86,-23}}, 1, nil)
+  -- puni.findTap({{16700238,0,0}, {2302755,30,-3}, {2302755,54,-3}, {16699188,71,1}, {16774872,63,1}, {16771217,42,-20}, {2302755,86,-23}}, 1, nil)
+  puni.tapIfColor(618, 1514, {16772780})
 end
 
 function puni.autoPlay()
@@ -123,16 +163,34 @@ function puni.autoPlay()
 end
 
 function puni.inPlay()
+  -- if os.difftime(os.time(), puni.lastPlayingAt) < 10 then
+  --   return true
+  -- end
+  --
+  -- if puni.find({{16772778,0,0}, {15327690,8,10}, {2302755,16,14}, {16775134,27,16}, {2302755,39,14}, {16700238,58,41}}, 1, nil) then
+  --   puni.lastPlayingAt = os.time()
+  --   return true
+  -- end
+  --
+  -- if puni.find({{6709060,0,0}, {6708539,0,16}, {921102,13,19}, {6709843,24,21}, {921102,37,19}, {6707497,51,26}, {6706207,59,43}}, 1, nil) then
+  --   puni.lastPlayingAt = os.time()
+  --   return true
+  -- end
+  --
+  -- return false
+
+  -- local color = getColor(61, 79)
+  -- if color == 16700753 or color == 7495716 then
+  --   return true
+  -- end
+  --
+  -- return false
+
   if os.difftime(os.time(), puni.lastPlayingAt) < 10 then
     return true
   end
 
-  if puni.find({{16772778,0,0}, {15327690,8,10}, {2302755,16,14}, {16775134,27,16}, {2302755,39,14}, {16700238,58,41}}, 1, nil) then
-    puni.lastPlayingAt = os.time()
-    return true
-  end
-
-  if puni.find({{6709060,0,0}, {6708539,0,16}, {921102,13,19}, {6709843,24,21}, {921102,37,19}, {6707497,51,26}, {6706207,59,43}}, 1, nil) then
+  if puni.colorIs(61, 79, {16700753, 7495716}) then
     puni.lastPlayingAt = os.time()
     return true
   end
@@ -141,15 +199,48 @@ function puni.inPlay()
 end
 
 function puni.inFever()
+  -- if os.difftime(os.time(), puni.lastFeverAt) < 5 then
+  --   return true
+  -- end
+  --
+  -- if puni.find({{16739692,0,0}, {16746359,2,-5}, {16753057,5,-10}, {16759735,8,-12}, {16748173,-4,4}}, 1, nil) then
+  --   puni.lastFeverAt = os.time()
+  --   return true
+  -- end
+  --
+  -- return false
+
+  -- local color = getColor(281, 2108)
+  -- if color == 16742255 then
+  --   return true
+  -- end
+  --
+  -- return false
+
   if os.difftime(os.time(), puni.lastFeverAt) < 5 then
     return true
   end
 
-  if puni.find({{16739692,0,0}, {16746359,2,-5}, {16753057,5,-10}, {16759735,8,-12}, {16748173,-4,4}}, 1, nil) then
+  --if puni.colorIs(281, 2108, {16742255}) then
+  if puni.colorIn(281, 2108, 16742255, 16777215) then
     puni.lastFeverAt = os.time()
     return true
   end
 
+  return false
+end
+
+function puni.hasFever1QuarterEnded()
+  -- local color = getColor(832, 2157)
+  -- if not color == 8506623 then
+  --   return true
+  -- end
+  --
+  -- return false
+
+  if not puni.colorIs(832, 2157, {8506623}) then
+    return true
+  end
   return false
 end
 
@@ -158,11 +249,23 @@ function puni.hasFeverHalfEnded()
   --  return true
   --end
 
-  if not puni.find({{6156031,0,0}, {6156031,-6,3}, {6156031,-6,6}, {5631743,-2,5}, {6614783,-1,10}}, 1, nil) then
-    --puni.lastFeverHalfEndedAt = os.time()
+  -- if not puni.find({{6156031,0,0}, {6156031,-6,3}, {6156031,-6,6}, {5631743,-2,5}, {6614783,-1,10}}, 1, nil) then
+  --   --puni.lastFeverHalfEndedAt = os.time()
+  --   return true
+  -- end
+  --
+  -- return false
+
+  -- local color = getColor(707, 2181)
+  -- if color == 5636074 then
+  --   return true
+  -- end
+  --
+  -- return false
+
+  if not puni.colorIs(707, 2181, {5636074}) then
     return true
   end
-
   return false
 end
 
@@ -196,6 +299,22 @@ function puni.chargeHitodama()
 
     tap(601.16, 2058.38)
     usleep(10000.00);
+  end
+end
+
+function puni.runApp()
+  if appState("com.Level5.YWP") == "NOT RUNNING" then
+    appRun("com.Level5.YWP")
+    usleep(10000000.00)
+
+    tap(731.64, 980.72)
+    usleep(10000000.00)
+
+    tap(751.94, 1096.62)
+    usleep(10000000.00)
+
+    tap(988.73, 2045.81)
+    usleep(10000.00)
   end
 end
 
