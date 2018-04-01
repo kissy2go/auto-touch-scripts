@@ -162,7 +162,7 @@ function puni.autoPlay()
   end
 end
 
-function puni.inPlay()
+function puni.inPlay_Legacy()
   -- if os.difftime(os.time(), puni.lastPlayingAt) < 10 then
   --   return true
   -- end
@@ -186,11 +186,46 @@ function puni.inPlay()
   --
   -- return false
 
-  if os.difftime(os.time(), puni.lastPlayingAt) < 10 then
+  if os.difftime(os.time(), puni.lastPlayingAt) < 5 then
     return true
   end
 
-  if puni.colorIs(61, 79, {16700753, 7495716}) then
+  -- if puni.colorIn(61, 79, 6395959, 16700753) then -- 一時停止ボタンの色で判定
+  if puni.colorIn(1210, 105, 4927583, 12285934) then -- 右上のスコアの紫色のアンダーラインの色で判定
+    puni.lastPlayingAt = os.time()
+    return true
+  end
+
+  return false
+end
+
+function puni.inPlay()
+  if puni.playing then
+    if os.difftime(os.time(), puni.lastPlayingAt) < 5 then
+      return true
+    end
+
+    -- log("Check playing or not...")
+    -- リザルト画面かどうか確認
+    -- if puni.colorIn(618, 1495, 16707769, 16773824) or puni.isAppStopped() then -- OK ボタンの色で判定
+    -- if puni.find({{2807537,0,0}, {917503,7,0}, {2302755,15,0}, {16728576,29,0}}, 0, {500, 260, 40, 5})  or puni.appState() == "NOT RUNNING" then -- クリアの「ク」の字で判定
+    if puni.find({{2368547,0,0}, {16777215,10,-1}, {2302755,22,-1}, {16777215,34,0}, {2302755,46,0}}, 0, {61, 218, 60, 20}) or puni.appState() == "NOT RUNNING" then -- 「バトルけっか」の「バ」の字で判定
+      -- log("End play")
+      puni.playing = false
+      puni.lastPlayingAt = nil
+      return false
+    end
+
+    puni.lastPlayingAt = os.time()
+    return true
+  end
+
+  -- 「?」ボタンがあったらバトルに入ったとみなす → フィーバー中に正常に判定されないため却下
+  -- if puni.find({{16449023,0,0}, {1144798,6,4}, {355293,15,3}, {16777215,20,10}, {13100024,33,13}, {14084336,16,35}, {1144799,16,41}}, 0, {389, 39, 40, 50}) then
+  -- 一時停止ボタンがあったらバトルに入ったとみなす
+  if puni.find({{16768869,0,0}, {16775653,0,5}, {2302755,0,11}}, 0, {120, 46, 2, 20}) then
+    -- log("Start play!")
+    puni.playing = true
     puni.lastPlayingAt = os.time()
     return true
   end
@@ -217,7 +252,7 @@ function puni.inFever()
   --
   -- return false
 
-  if os.difftime(os.time(), puni.lastFeverAt) < 5 then
+  if os.difftime(os.time(), puni.lastFeverAt) < 3 then
     return true
   end
 
@@ -302,20 +337,32 @@ function puni.chargeHitodama()
   end
 end
 
+function puni.becomeFriends()
+  -- ともだちになる
+  puni.findTap({{16706493,0,0}, {16766046,0,13}, {16247757,0,29}}, 0, nil) -- 会話の▼ボタンクリック (どの座標でも OK)
+  puni.findTap({{16771219,0,0}, {2302755,19,0}, {16771220,40,-1}, {2302755,63,-1}, {16774352,74,-1}, {2302755,86,-2}, {16774091,104,-2}, {16702816,110,-2}}, 0, nil) -- OK ボタン (どの座標でも OK)
+end
+
+puni.APP_IDENTIFIER = "com.Level5.YWP"
+
+function puni.appState()
+  return appState(puni.APP_IDENTIFIER)
+end
+
 function puni.runApp()
-  if appState("com.Level5.YWP") == "NOT RUNNING" then
-    appRun("com.Level5.YWP")
-    usleep(10000000.00)
-
-    tap(731.64, 980.72)
-    usleep(10000000.00)
-
-    tap(751.94, 1096.62)
-    usleep(10000000.00)
-
-    tap(988.73, 2045.81)
-    usleep(10000.00)
+  if not (puni.appState() == "NOT RUNNING") then
+    return
   end
+
+  appRun(puni.APP_IDENTIFIER)
+
+  while not puni.colorIs(137, 49, {4312319}) do
+    puni.usleep(1000000)
+    puni.randomTap({711, 1097}, {1976, 2125})
+    puni.usleep(1000000)
+  end
+
+  puni.usleep(3000000)
 end
 
 function puni.playSuriSuri()
